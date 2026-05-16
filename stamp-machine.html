@@ -309,7 +309,7 @@
               'div',
               { className: 'container' },
               el('h1', {}, 'Stamp Machine'),
-              el('p', {}, 'Phase 3 Template PDF Preview + Box Drawing'),
+              el('p', {}, 'Phase 6 Make it pretty!'),
               el('pre', {}, JSON.stringify(state, null, 2)),
             ),
           );
@@ -347,7 +347,10 @@
                 {
                   onClick: () => {
                     state.names.splice(index, 1);
-                    localStorage.setItem('sm_names', JSON.stringify(state.names));
+                    localStorage.setItem(
+                      'sm_names',
+                      JSON.stringify(state.names),
+                    );
                     updateList();
                   },
                   style: { marginLeft: '0.5rem' },
