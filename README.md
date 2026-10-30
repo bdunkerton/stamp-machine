@@ -28,8 +28,14 @@ My mom is a preschool teacher. She hand-writes student names onto stacks of prac
 
 - [pdf.js](https://mozilla.github.io/pdf.js/) for rendering the template preview
 - [pdf-lib](https://pdf-lib.js.org/) for generating the output PDF
-- [Quicksand](https://fonts.google.com/specimen/Quicksand) (base64-embedded in the HTML) for the traceable font
+- StampFont, a Latin subset of [Quicksand](https://fonts.google.com/specimen/Quicksand) Bold (base64-embedded in the HTML as WOFF2) for the traceable font
 - SVG-based text rendering with `textLength` for natural width fitting
 
 ## Usage
 Open `stamp-machine.html` in a browser. That's it!
+
+## License
+
+The code is released under the [MIT License](LICENSE).
+
+StampFont is a subset of Quicksand, Copyright 2019 The Quicksand Project Authors (https://github.com/andrew-paglinawan/QuicksandFamily), licensed under the [SIL Open Font License 1.1](https://openfontlicense.org/). It is renamed because the license reserves the name "Quicksand" for unmodified versions.
