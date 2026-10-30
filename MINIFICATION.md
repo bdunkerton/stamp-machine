@@ -32,6 +32,7 @@ Right now the HTML file is about 2% of what a first visit downloads. The librari
   - Write a minimal renderer covering only the kinds of worksheets actually used (scans, simple vector pages).
   - Keep pdf.js as the one remaining dependency.
 - [ ] **Remove the Google Fonts request for Caveat.** Four weights load for a title and a few labels. Options: subset Caveat to just the characters the UI uses and embed it, draw the title as an SVG path, or fall back to a system font.
+  - [ ] Quick win first: stop requesting weight 700. The request asks for `400;500;600;700`, but the CSS only uses 400 (hints and placeholders), 500 (counts and the Names heading) and 600 (the title).
 
 ## Stamp font
 
