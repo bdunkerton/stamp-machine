@@ -10,6 +10,8 @@ _100% vibe-planned with Claude, and 99% hand coded by me!_
 
 _Check out the [build guide](/stamp-machine-v2-build-guide.md) to see how we got here!_
 
+_See the [roadmap](/ROADMAP.md) to follow along!_
+
 ## Why this exists
 
 My mom is a preschool teacher. She hand-writes student names onto stacks of practice worksheets all the time so her students can trace them. That's a lot of names and a lot of writing. This app does it for her!
