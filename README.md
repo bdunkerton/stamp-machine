@@ -1,4 +1,4 @@
-# Stamp Machine Minification
+# Stamp Machine (The Minification Era)
 
 [![stamp-machine.html size](https://img.shields.io/github/size/bdunkerton/stamp-machine/stamp-machine.html?branch=main&label=stamp-machine.html)](stamp-machine.html)
 
