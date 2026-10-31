@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
     <style>
@@ -643,8 +643,6 @@
         const { PDFDocument } = PDFLib;
         const pdfDoc = await PDFDocument.create();
 
-        await document.fonts.load('10px StampFont');
-
         for (const name of state.names) {
           const nameCanvas = document.createElement('canvas');
           const SUPERSAMPLE = 3;
@@ -678,7 +676,7 @@
         }
 
         const pdfBytes = await pdfDoc.save();
-        const blob = new Blob([pdfBytes], { type: 'applicatoin/pdf' });
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
