@@ -12,14 +12,14 @@ The goal is a single HTML file with **no third-party dependencies** that is **as
 
 | What a first visit downloads | Bytes | Gzipped |
 |---|---|---|
-| `stamp-machine.html` | 47,231 | 22,677 |
+| `stamp-machine.html` | 47,173 | 22,613 |
 | pdf.js + worker (CDN) | 1,407,216 | 378,955 |
 | pdf-lib (CDN) | 525,099 | 206,660 |
-| Caveat font (Google Fonts) | not measured | |
+| Caveat font, 3 weights (Google Fonts) | not measured | |
 
 The HTML file is about 2% of a first visit today. The libraries are the other 98%.
 
-Inside `stamp-machine.html`: stamp font 19,546 · JavaScript 17,237 · CSS 9,742 bytes.
+Inside `stamp-machine.html`: stamp font 19,546 · JavaScript 17,179 · CSS 9,742 bytes.
 
 ### Size history
 
@@ -29,6 +29,7 @@ Add a row whenever a change lands.
 |---|---|---|---|---|
 | 2026-10-29 | Starting point | 132,508 | ~2.1 MB | |
 | 2026-10-29 | Subset stamp font to WOFF2 | 47,231 | ~2.0 MB | #1 |
+| 2026-10-30 | Phase 1 quick wins | 47,173 | ~2.0 MB | #7 |
 
 ## Phase 1: Quick wins
 
@@ -37,14 +38,15 @@ Small, low-risk changes that cut bytes without changing how the app works.
 | Item | Status | Saves | PR |
 |---|---|---|---|
 | Subset Quicksand to Latin, embed as WOFF2, rename to StampFont | ✅ | 85 KB | #1 |
-| Stop requesting the unused Caveat 700 weight | 📋 | | |
-| Fix the misspelled `'applicatoin/pdf'` download type | 📋 | | |
-| Remove `document.fonts.load('10px StampFont')` if it's a no-op | 📋 | | |
+| Stop requesting the unused Caveat 700 weight | ✅ | Small (CSS only) | #7 |
+| Fix the misspelled `'applicatoin/pdf'` download type | ✅ | Bug fix | #7 |
+| Remove `document.fonts.load('10px StampFont')`, a no-op | ✅ | 58 B | #7 |
 | Decide whether accented names are needed (ASCII-only font is ~10.5 KB) | 💡 | ~9 KB | |
 
 **Notes & findings**
 - Font subset: 808 → 373 glyphs, rendering is pixel-identical. The OFL requires the rename because "Quicksand" is a Reserved Font Name. The copyright and license notice stay in the font and the README.
-- StampFont only exists inside the SVG used to draw names, so loading it on the page probably does nothing. Confirm before removing.
+- Confirmed: `document.fonts.load('10px StampFont')` matched zero fonts, because StampFont only exists inside the SVG used to draw each name, and that SVG loads its own font before it's drawn. Removing it left the generated PDFs pixel-identical.
+- Browsers only download the font files a page actually uses, so the Caveat 700 file was never downloaded. Dropping it only shortens the stylesheet Google sends back.
 
 ## Phase 2: Lean app code
 
