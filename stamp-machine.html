@@ -639,9 +639,72 @@
         await render();
       }
 
+      // Returns a function that adds a new page showing the template's first
+      // page. Every page points at one shared copy of the worksheet instead
+      // of carrying its own. Annotations (like form fields) can't be shared
+      // between pages, so templates with them are copied per page instead.
+      async function pageMaker(pdfDoc, templatePdfDoc) {
+        const { PDFName, PDFArray, PDFDict } = PDFLib;
+        const key = (name) => PDFName.of(name);
+
+        const annots = templatePdfDoc.getPage(0).node.lookup(key('Annots'));
+        if (annots instanceof PDFArray && annots.size() > 0) {
+          return async () => {
+            const [copiedPage] = await pdfDoc.copyPages(templatePdfDoc, [0]);
+            return pdfDoc.addPage(copiedPage);
+          };
+        }
+
+        const [template] = await pdfDoc.copyPages(templatePdfDoc, [0]);
+        pdfDoc.context.delete(template.ref);
+
+        const contents = template.node.lookup(key('Contents'));
+        const contentRefs =
+          contents instanceof PDFArray
+            ? contents.asArray()
+            : [template.node.get(key('Contents'))].filter(Boolean);
+        const resources =
+          template.node.lookupMaybe(key('Resources'), PDFDict) ||
+          pdfDoc.context.obj({});
+        const skip = ['Type', 'Parent', 'Contents', 'Resources', 'Annots'].map(
+          key,
+        );
+
+        return async () => {
+          const page = pdfDoc.addPage();
+          for (const [k, value] of template.node.entries()) {
+            if (!skip.includes(k)) page.node.set(k, value);
+          }
+          // Wrap the worksheet in save/restore (q/Q) so anything it leaves
+          // behind, like a flipped coordinate system, can't affect the name.
+          const { context } = pdfDoc;
+          page.node.set(
+            key('Contents'),
+            context.obj([
+              context.getPushGraphicsStateContentStream(),
+              ...contentRefs,
+              context.getPopGraphicsStateContentStream(),
+            ]),
+          );
+          // Each page gets its own resource lists, so a name drawn on one
+          // page can't leak onto the others.
+          const pageResources = resources.clone();
+          for (const name of ['Font', 'XObject', 'ExtGState']) {
+            const dict = resources.lookupMaybe(key(name), PDFDict);
+            pageResources.set(key(name), dict ? dict.clone() : context.obj({}));
+          }
+          page.node.set(key('Resources'), pageResources);
+          return page;
+        };
+      }
+
       async function generateStamp() {
         const { PDFDocument } = PDFLib;
         const pdfDoc = await PDFDocument.create();
+        const templatePdfDoc = await PDFDocument.load(
+          new Uint8Array(state.templatePdf.slice(0)),
+        );
+        const addTemplatePage = await pageMaker(pdfDoc, templatePdfDoc);
 
         for (const name of state.names) {
           const nameCanvas = document.createElement('canvas');
@@ -655,11 +718,7 @@
           const nameImageDataUrl = nameCanvas.toDataURL('image/png');
           const nameImage = await pdfDoc.embedPng(nameImageDataUrl);
 
-          const templatePdfDoc = await PDFDocument.load(
-            new Uint8Array(state.templatePdf.slice(0)),
-          );
-          const [copiedPage] = await pdfDoc.copyPages(templatePdfDoc, [0]);
-          const page = pdfDoc.addPage(copiedPage);
+          const page = await addTemplatePage();
 
           const nameX = state.box.x * state.pdfPageWidth;
           const nameY =
