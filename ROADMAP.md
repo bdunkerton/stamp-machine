@@ -12,14 +12,14 @@ The goal is a single HTML file with **no third-party dependencies** that is **as
 
 | What a first visit downloads | Bytes | Gzipped |
 |---|---|---|
-| `stamp-machine.html` | 47,173 | 22,613 |
+| `stamp-machine.html` | 49,684 | 23,536 |
 | pdf.js + worker (CDN) | 1,407,216 | 378,955 |
 | pdf-lib (CDN) | 525,099 | 206,660 |
 | Caveat font, 3 weights (Google Fonts) | not measured | |
 
 The HTML file is about 2% of a first visit today. The libraries are the other 98%.
 
-Inside `stamp-machine.html`: stamp font 19,546 · JavaScript 17,179 · CSS 9,742 bytes.
+Inside `stamp-machine.html`: stamp font 19,546 · JavaScript 19,690 · CSS 9,742 bytes.
 
 ### Size history
 
@@ -30,6 +30,7 @@ Add a row whenever a change lands.
 | 2026-10-29 | Starting point | 132,508 | ~2.1 MB | |
 | 2026-10-29 | Subset stamp font to WOFF2 | 47,231 | ~2.0 MB | #1 |
 | 2026-10-30 | Phase 1 quick wins | 47,173 | ~2.0 MB | #7 |
+| 2026-11-03 | Share one copy of the template across pages | 49,684 | ~2.0 MB | #8 |
 
 ## Phase 1: Quick wins
 
@@ -68,12 +69,16 @@ Make the PDFs the app generates smaller and sharper.
 
 | Item | Status | Saves | PR |
 |---|---|---|---|
-| Load the template once, not once per name | 📋 | | |
+| Share one copy of the template across all pages | ✅ | 56–74% of output, 20 names | #8 |
 | Draw names as vector paths instead of 3× PNG images | 💡 | | |
 
 **Notes & findings**
-- `generateStamp` reloads and copies the template inside its loop, so every page carries a full copy. That multiplies with large scanned worksheets and full classes.
-- A 3-name test came out at ~25 KB, mostly PNG data. Vector names would also remove the need for the font, the canvas and the PNG step.
+- `generateStamp` used to reload and copy the template for every name, so each page carried a full copy. Loading it once wasn't enough, because pdf-lib's `copyPages` still copies everything each call. Now every page points at one shared copy of the worksheet's content.
+- With 20 names: a scanned-style worksheet went from 1.35 MB to 354 KB, and a browser-printed one from 734 KB to 323 KB. All pages were pixel-identical to before.
+- Each page still gets its own small resource lists, so a name can't leak onto another page, and the worksheet is wrapped in save/restore (`q`/`Q`). Browser-printed PDFs leave the coordinate system flipped, which drew names upside-down until this was added.
+- Worksheets with real annotations, like fillable form fields, still get a full copy per page, since annotations can't be shared between pages.
+- Tradeoff: `stamp-machine.html` grew by 2,511 bytes (923 gzipped). A future build step that strips comments will win some of that back.
+- What's left in the output is mostly the name PNGs, about 15 KB each. Vector names would also remove the need for the font, the canvas and the PNG step.
 
 ## Phase 4: Replace pdf-lib
 
