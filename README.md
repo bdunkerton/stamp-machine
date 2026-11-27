@@ -28,6 +28,7 @@ My mom is a preschool teacher. She hand-writes student names onto stacks of prac
 - **Light grey traceable font** — names render in Google's [Quicksand font](https://fonts.google.com/specimen/Quicksand?preview.script=Latn) at low opacity so students can trace right over them.
 - **Auto-fit** — the magic is using an SVG to make sure any length of name fits into the bounding box.
 - **Memory** — remembers the names you typed and the last bounding box you drew, so you don't have to redo setup on every visit as you upload new templates.
+- **Hand shucked names** — check the box next to any student who can write their own name. They still get a worksheet, but the name box is left blank. Check or uncheck it any time.
 - **Single file** — I just think it's cool! A fun way to solve the problem.
 ## Tech
 
