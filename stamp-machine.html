@@ -333,7 +333,7 @@
 
       .name-row {
         display: grid;
-        grid-template-columns: 56px 1fr 28px;
+        grid-template-columns: 56px 1fr auto 28px;
         align-items: center;
         gap: 12px;
         padding: 8px 4px;
@@ -373,6 +373,31 @@
       .name-text {
         font-size: 17px;
         color: var(--ink);
+      }
+
+      .name-row.shucked .name-text {
+        color: var(--ink-faint);
+        font-style: italic;
+      }
+
+      .shuck {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        font-family: 'Caveat', cursive;
+        font-size: 18px;
+        color: var(--ink-soft);
+        white-space: nowrap;
+        user-select: none;
+      }
+
+      .shuck input {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        cursor: pointer;
+        accent-color: var(--coral-deep);
       }
 
       .delete-btn {
@@ -453,6 +478,13 @@
           }
         }
         return element;
+      }
+
+      // Each roster entry is { name, shucked }. A hand-shucked student still
+      // gets a worksheet, just with the name box left blank so they can
+      // write their own name.
+      function saveNames() {
+        localStorage.setItem('sm_names', JSON.stringify(state.names));
       }
 
       async function renderNameToCanvas(canvas, name) {
@@ -706,7 +738,12 @@
         );
         const addTemplatePage = await pageMaker(pdfDoc, templatePdfDoc);
 
-        for (const name of state.names) {
+        for (const { name, shucked } of state.names) {
+          if (shucked) {
+            await addTemplatePage();
+            continue;
+          }
+
           const nameCanvas = document.createElement('canvas');
           const SUPERSAMPLE = 3;
           nameCanvas.width = state.box.width * state.pdfPageWidth * SUPERSAMPLE;
@@ -902,18 +939,38 @@
             return;
           }
 
-          state.names.forEach((name, index) => {
-            const row = el('div', { className: 'name-row' });
+          state.names.forEach((entry, index) => {
+            const { name } = entry;
+            const row = el('div', {
+              className: entry.shucked ? 'name-row shucked' : 'name-row',
+            });
             const initial = (name.trim()[0] || '?').toUpperCase();
             row.appendChild(bloomCircle(initial, index));
             row.appendChild(el('div', { className: 'name-text' }, name));
+
+            const shuck = el('label', {
+              className: 'shuck',
+              title: 'leave the name box blank so this student writes it',
+            });
+            const shuckBox = el('input', {
+              type: 'checkbox',
+              checked: !!entry.shucked,
+              onChange: () => {
+                entry.shucked = shuckBox.checked;
+                row.classList.toggle('shucked', entry.shucked);
+                saveNames();
+              },
+            });
+            shuck.appendChild(shuckBox);
+            shuck.appendChild(document.createTextNode('hand shucked name'));
+            row.appendChild(shuck);
 
             const deleteBtn = el('button', {
               className: 'delete-btn',
               title: 'remove',
               onClick: () => {
                 state.names.splice(index, 1);
-                localStorage.setItem('sm_names', JSON.stringify(state.names));
+                saveNames();
                 updateList();
                 syncGenerateButton();
               },
@@ -937,8 +994,11 @@
 
         nameInput.addEventListener('keydown', (event) => {
           if (event.key === 'Enter' && nameInput.value.trim() !== '') {
-            state.names.push(nameInput.value.trim().toUpperCase());
-            localStorage.setItem('sm_names', JSON.stringify(state.names));
+            state.names.push({
+              name: nameInput.value.trim().toUpperCase(),
+              shucked: false,
+            });
+            saveNames();
             nameInput.value = '';
             updateList();
             syncGenerateButton();
@@ -968,7 +1028,12 @@
         const savedNames = localStorage.getItem('sm_names');
 
         if (savedBox) state.box = JSON.parse(savedBox);
-        if (savedNames) state.names = JSON.parse(savedNames);
+        // Older saves stored plain strings; upgrade them to roster entries.
+        if (savedNames) {
+          state.names = JSON.parse(savedNames).map((entry) =>
+            typeof entry === 'string' ? { name: entry, shucked: false } : entry,
+          );
+        }
         await render();
       })();
     </script>
